@@ -1,3 +1,3 @@
 # latex_fragment
 
-from latex_fragment import LatexFragment
+from .fragment import LatexFragment

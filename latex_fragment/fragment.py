@@ -1,5 +1,5 @@
 from importlib import reload
-import render_latex
+from . import render_latex
 render_latex = reload(render_latex)
 
 class LatexFragment:
@@ -12,6 +12,13 @@ class LatexFragment:
 
     def _repr_png_(self):
         return render_latex.as_png(
-            self._preamble,
-            self.context
+            preamble=self._preamble,
+            content=self.content
         )
+
+    def _repr_pdf_(self):
+        return render_latex.as_pdf(
+            preamble=self._preamble,
+            content=self.content
+        )
+

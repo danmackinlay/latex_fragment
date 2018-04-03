@@ -7,7 +7,8 @@ with codecs_open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 
-setup(name='latex_fragment',
+setup(
+      name='latex_fragment',
       version='0.0.1',
       description=u"Skeleton of a Python package",
       long_description=long_description,
@@ -17,10 +18,11 @@ setup(name='latex_fragment',
       author_email='dan@livingthing.org',
       url='https://github.com/danmackinlay/latex_fragment',
       license='MIT',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      packages=['latex_fragment'],
+      scripts=[],
       include_package_data=True,
       zip_safe=False,
       extras_require={
           'test': ['pytest'],
       },
-      )
+)
