@@ -1,3 +1,3 @@
 # latex_fragment
 
-has_legs = False
+from latex_fragment import LatexFragment
