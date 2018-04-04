@@ -14,7 +14,7 @@ import os.path
 import re
 import subprocess
 import sys
-import tempfile
+from pathlib import Path
 
 def call(*args, **kwargs):
     """execute a subprocess, return
@@ -33,7 +33,7 @@ def call(*args, **kwargs):
             out = outfile.read()
         with open(errfilename, 'r+b') as errfile:
             err = errfile.read()
-        return out, err
+        return out, err, proc.returncode
 
 
 def as_standalone_document(extra_packages, body):
@@ -45,7 +45,7 @@ def as_standalone_document(extra_packages, body):
     \usepackage[active]{{preview}}
     {extra_packages}
     \begin{{document}}
-    \\pagestyle{{empty}}
+    \pagestyle{{empty}}
     \begin{{preview}}
     {body}
     \end{{preview}}
@@ -71,7 +71,7 @@ def temp_filepath(suffix=''):
 
 def remove_if_exists(filename):
     try:
-        os.remove(filename)
+        os.remove(str(filename))
     except OSError:
         pass
 
@@ -91,41 +91,53 @@ def as_png(latex_string, dest='./', dpi=150):
     with NamedTemporaryFile(
             suffix='.tex',
             delete=False
-            ) as tempfile:
-        tempfilename = tempfile.name
-        tempfile.write(
-            as_standalone_document(
-                *extra_packages_body(
-                    latex_string
-                )
-            )
+            ) as temp_tex_file:
+        temp_tex_path = Path(temp_tex_file.name)
+        extra_packages, body = extra_packages_body(
+            latex_string
         )
-        tempfile.close()
-        subprocess.call(['pdflatex', '-interaction=nonstopmode', tempfilename])
+        temp_tex_file.write(
+            as_standalone_document(
+                extra_packages, body
+            ).encode()
+        )
+        temp_tex_file.close()
+        cwd = str(os.path.dirname(temp_tex_path))
 
-    tempfiledir = os.path.dirname(tempfilename)
+        stderr, stdout, returncode = call([
+            'pdflatex',
+            '-interaction=batchmode',
+            str(temp_tex_path),
+        ], cwd=cwd)
+        if returncode>0:
+            raise Exception(
+                stderr.decode(),
+                stdout.decode(), returncode)
+        stderr, stdout, returncode = call([
+            'convert',
+            '-density',
+            str(dpi),
+            str(temp_tex_path.with_suffix('.pdf')),
+            str(temp_tex_path.with_suffix('.png'))
+        ], cwd=cwd)
+        if returncode>0:
+            raise Exception(
+                stderr.decode(),
+                stdout.decode(),
+                returncode)
+        with open(str(temp_tex_path.with_suffix('.png')), 'rb') as h:
+            png = h.read()
 
-    # crop pdf, convert to png
-    stderr, stdout = call([
-        'pdfcrop',
-        '{}.pdf'.format(tempfilename),
-        '{}.pdf'.format(outfile)
-    ])
-    print(stderr, stdout)
-    stderr, stdout = call([
-        'convert',
-        '-density',
-        str(dpi),
-        '{}.pdf'.format(outfile),
-        '{}.png'.format(outfile)
-    ])
-    print(stderr, stdout)
-    with open('{}.png'.format(outfile), 'r') as h:
-        png = h.read()
+        remove_if_exists(temp_tex_path.with_suffix('.pdf'))
+        remove_if_exists(temp_tex_path.with_suffix('.png'))
+        remove_if_exists(temp_tex_path.with_suffix('.log'))
+        remove_if_exists(temp_tex_path.with_suffix('.aux'))
+        return png
 
-    remove_if_exists(tmp_name + '.tex')
-    remove_if_exists(tmp_name + '.pdf')
-    remove_if_exists(tmp_name + '.log')
-    remove_if_exists(tmp_name + '.aux')
-    return png
-    
+
+def as_pdf(latex_string):
+    pass
+
+
+def as_svg(latex_string):
+    pass
