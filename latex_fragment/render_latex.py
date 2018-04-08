@@ -15,6 +15,22 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+import base64
+
+
+def as_image_data_uri_elem(data, alt=""):
+    return (
+        '''
+        <img
+            style=""
+            src="data:image/png;base64,{data}"
+            alt={alt}
+        />
+        '''
+    ).format(
+        data=''.join(base64.encodebytes(data).decode().split('\n')),
+        alt=alt
+    )
 
 def call(*args, **kwargs):
     """execute a subprocess, return
@@ -154,3 +170,8 @@ def as_pdf(latex_string):
 
 def as_svg(latex_string):
     pass
+
+
+def as_html(latex_string):
+    img_bytes = as_png(latex_string)
+    return as_image_data_uri_elem(img_bytes, latex_string)
