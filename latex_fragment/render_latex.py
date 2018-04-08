@@ -104,27 +104,40 @@ def as_png(latex_string, dest='./', dpi=150):
         temp_tex_file.close()
         cwd = str(os.path.dirname(temp_tex_path))
 
-        stderr, stdout, returncode = call([
+        cmd = [
             'pdflatex',
             '-interaction=batchmode',
             str(temp_tex_path),
-        ], cwd=cwd)
+        ]
+        stderr, stdout, returncode = call(cmd, cwd=cwd)
         if returncode>0:
-            raise Exception(
-                stderr.decode(),
-                stdout.decode(), returncode)
-        stderr, stdout, returncode = call([
+            raise ChildProcessError(
+                "`{!r}` failed with return code {}:\n{}\n{}\n ".format(
+                    cmd,
+                    returncode,
+                    stderr.decode(),
+                    stdout.decode()
+                )
+            )
+
+        cmd = [
             'convert',
             '-density',
             str(dpi),
             str(temp_tex_path.with_suffix('.pdf')),
             str(temp_tex_path.with_suffix('.png'))
-        ], cwd=cwd)
+        ]
+
+        stderr, stdout, returncode = call(cmd, cwd=cwd)
         if returncode>0:
-            raise Exception(
-                stderr.decode(),
-                stdout.decode(),
-                returncode)
+            raise ChildProcessError(
+                "`{!r}` failed with return code {}:\n{}\n{}\n ".format(
+                    cmd,
+                    returncode,
+                    stderr.decode(),
+                    stdout.decode()
+                )
+            )
         with open(str(temp_tex_path.with_suffix('.png')), 'rb') as h:
             png = h.read()
 
