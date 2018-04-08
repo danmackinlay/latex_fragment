@@ -18,6 +18,27 @@ This will render just fine, using your sytem LaTeX.
 
 .. image:: screenshot.png
 
+Fancier:
+
+.. code:: python
+
+    import latex_fragment
+    latex_fragment.LatexFragment(r'''
+    \usepackage{algorithmicx}
+    \usepackage{algpseudocode}
+    \begin{algorithmic}[1]
+        \Require $f:\boldsymbol{x},\boldsymbol{h}\mapsto \boldsymbol{y},\boldsymbol{h}',$ single step function
+        \Require $\textrm{X}=[\boldsymbol{x}_1, \boldsymbol{x}_2\dots\boldsymbol{x}_L]$ input features
+        \Require $\textrm{y}=[\boldsymbol{y}_1, \boldsymbol{y}_2\dots\boldsymbol{y}_L]$ labels
+        \Function{TBPTT}{$a,b$}
+            \For{$t$ from $1$ to $L$}
+                \State $r\gets a \bmod b$
+            \EndFor
+            \State \textbf{return}
+        \EndFunction
+    \end{algorithmic}''')
+
+.. image:: algo_screenshot.png
 
 .. _mathjax: https://www.mathjax.org/
 .. _katex: https://github.com/Khan/KaTeX
