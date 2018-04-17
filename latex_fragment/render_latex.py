@@ -122,7 +122,8 @@ def as_png(latex_string, dest='./', dpi=150):
 
         cmd = [
             'pdflatex',
-            '-interaction=batchmode',
+            '-interaction=nonstopmode',
+            '-halt-on-error',
             str(temp_tex_path),
         ]
         stderr, stdout, returncode = call(cmd, cwd=cwd)
