@@ -26,19 +26,23 @@ Fancier:
     latex_fragment.LatexFragment(r'''
     \usepackage{algorithmicx}
     \usepackage{algpseudocode}
+    \begin{algorithm}
+    \caption{Euclid’s algorithm}\label{euclid}
     \begin{algorithmic}[1]
-        \Require $f:\boldsymbol{x},\boldsymbol{h}\mapsto \boldsymbol{y},\boldsymbol{h}',$ single step function
-        \Require $\textrm{X}=[\boldsymbol{x}_1, \boldsymbol{x}_2\dots\boldsymbol{x}_L]$ input features
-        \Require $\textrm{y}=[\boldsymbol{y}_1, \boldsymbol{y}_2\dots\boldsymbol{y}_L]$ labels
-        \Function{TBPTT}{$a,b$}
-            \For{$t$ from $1$ to $L$}
-                \State $r\gets a \bmod b$
-            \EndFor
-            \State \textbf{return}
-        \EndFunction
-    \end{algorithmic}''')
+    \Procedure{Euclid}{$a,b$}\Comment{The g.c.d. of a and b}
+        \State $r\gets a\bmod b$
+        \While{$r\not=0$}\Comment{We have the answer if r is 0}
+            \State $a\gets b$
+            \State $b\gets r$
+            \State $r\gets a\bmod b$
+        \EndWhile\label{euclidendwhile}
+        \State \textbf{return} $b$\Comment{The gcd is b}
+    \EndProcedure
+    \end{algorithmic}
+    \end{algorithm}
+    ''')
 
-.. image:: algo_screenshot.png
+.. image:: algo.png
 
 .. _mathjax: https://www.mathjax.org/
 .. _katex: https://github.com/Khan/KaTeX
