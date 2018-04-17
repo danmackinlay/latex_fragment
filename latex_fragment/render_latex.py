@@ -52,8 +52,11 @@ def call(*args, **kwargs):
         return out, err, proc.returncode
 
 
-def as_standalone_document(extra_packages, body):
+def as_standalone_document(latex_string):
     """ Returns latex_string prepared as a LaTeX document """
+    extra_packages, body = extra_packages_body(
+        latex_string
+    )
     return r"""\documentclass[preview]{{standalone}}
     \usepackage{{amsmath}}
     \usepackage{{amsfonts}}
@@ -95,7 +98,7 @@ def remove_if_exists(filename):
 def extra_packages_body(latex_string):
     packages, body = [], []
     for line in latex_string.split('\n'):
-        if line.startswith('\\usepackage'):
+        if line.strip().startswith(r'\usepackage'):
             packages.append(line)
         else:
             body.append(line)
@@ -109,12 +112,9 @@ def as_png(latex_string, dest='./', dpi=150):
             delete=False
             ) as temp_tex_file:
         temp_tex_path = Path(temp_tex_file.name)
-        extra_packages, body = extra_packages_body(
-            latex_string
-        )
         temp_tex_file.write(
             as_standalone_document(
-                extra_packages, body
+                latex_string
             ).encode()
         )
         temp_tex_file.close()
