@@ -34,3 +34,10 @@ class LatexFragment:
         which doesn't work for non-math.
         """
         return render_latex.as_html(self._body)
+
+    def _repr_markdown_(self):
+        """
+        Probably we want to pass through raw latex so that it can be
+        post-processed.
+        """
+        return self._repr_latex_(fragment=True)
