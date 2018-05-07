@@ -2,9 +2,9 @@ latex_fragment
 ===============================
 
 You are writing your code using jupyter_ or pweave_,
-but your colleague freaks out because it's not using 
+but your colleague freaks out because it's not using
 *that one special latex thing that we totally need or it's not real science*.
-(Let's say it's ``\algorithmic``, say, because this problem is alrady solved for 
+(Let's say it's ``\algorithmic``, say, because this problem is alrady solved for
 mathematical markup thanks to MathJax_ and Katex_.)
 
 No problem.
@@ -43,6 +43,16 @@ Fancier:
     ''')
 
 .. image:: algo.png
+
+If you want it to display as an image, e.g. Pweave output, you can use the
+ipython display infrastructure:
+
+.. code:: python
+
+    from IPython.display import display
+    import latex_fragment
+    l = latex_fragment.LatexFragment(r'$x=y$')
+    display(l)
 
 .. _mathjax: https://www.mathjax.org/
 .. _katex: https://github.com/Khan/KaTeX
