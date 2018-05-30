@@ -4,6 +4,10 @@ pdflatex "standalone" rendering
 based on https://github.com/johnjosephhorton/texscrap/blob/master/texscrap.py
 and
 https://gist.github.com/ahwillia/ce9a842f122757518c65d0bd545f28c1#file-equations-tex-L2
+
+There is a bit of wasteful creation and deletion of files here,
+but I briefly thought I could do everything with pipes,
+before I discovered PDFs need random access.
 """
 
 from shutil import copy2 as copy
@@ -12,10 +16,34 @@ import hashlib
 import os
 import os.path
 import re
-import subprocess
+from subprocess import run, PIPE, DEVNULL
 import sys
 from pathlib import Path
 import base64
+
+
+def verbose_run(cmd, **kwargs):
+    """
+    we always want to include stdout in the errors,
+    which the default `check=True` does not.
+    So we self-check.
+    """
+    proc = run(
+        cmd,
+        stdout=PIPE,
+        stderr=PIPE,
+        check=False,
+        **kwargs)
+    if proc.returncode > 0:
+        raise ChildProcessError(
+            "`{!r}` failed with return code {}:\n{}\n{}\n ".format(
+                cmd,
+                proc.returncode,
+                proc.stderr.decode(),
+                proc.stdout.decode()
+            )
+        )
+    return proc
 
 
 def as_image_data_uri_elem(data, alt=""):
@@ -31,25 +59,6 @@ def as_image_data_uri_elem(data, alt=""):
         data=''.join(base64.encodebytes(data).decode().split('\n')),
         alt=alt
     )
-
-def call(*args, **kwargs):
-    """execute a subprocess, return
-    a tuple of the stdout and the stderr of the call.
-    
-    >>>call(['echo', 'hello world'])
-    ('hello world\n', '')
-    """
-    with NamedTemporaryFile() as outfile, NamedTemporaryFile() as errfile:
-        outfilename = outfile.name
-        errfilename = errfile.name
-        proc = subprocess.Popen(
-            *args, stdout=outfile, stderr=errfile, **kwargs)
-        proc.wait()
-        with open(outfilename, 'r+b') as outfile:
-            out = outfile.read()
-        with open(errfilename, 'r+b') as errfile:
-            err = errfile.read()
-        return out, err, proc.returncode
 
 
 def as_standalone_document(latex_string):
@@ -77,7 +86,7 @@ def as_standalone_document(latex_string):
 def hashed(content):
     """context_hash"""
     output = hashlib.md5()
-    output.update(self.content)
+    output.update(content)
     return output.hexdigest()
 
 
@@ -106,19 +115,36 @@ def extra_packages_body(latex_string):
 
 
 def as_png(latex_string, dest='./', dpi=150):
-
-    with NamedTemporaryFile(
-            suffix='.tex',
-            delete=False
-            ) as temp_tex_file:
-        temp_tex_path = Path(temp_tex_file.name)
-        temp_tex_file.write(
-            as_standalone_document(
-                latex_string
-            ).encode()
+    """
+    pdf is not a streaming format and must happen on FS.
+    """
+    pdf = as_pdf(latex_string)
+    with NamedTemporaryFile(suffix='.pdf', mode="w+b") as temp_pdf_handle:
+        temp_pdf_path = Path(temp_pdf_handle.name)
+        temp_pdf_handle.write(pdf)
+        temp_pdf_handle.seek(0)
+        cmd = [
+            'convert', '-density',
+            str(dpi),
+            str(temp_pdf_path),
+            str('png:-')
+        ]
+        proc = verbose_run(
+            cmd,
+            bufsize=int(1e8),
         )
+        return proc.stdout
+
+
+def as_pdf(latex_string):
+    """
+    latex is temp file heavy and must happen on the FS
+    """
+    with NamedTemporaryFile(suffix='.tex', delete=False) as temp_tex_file:
+        temp_tex_path = Path(temp_tex_file.name)
+        temp_tex_file.write(as_standalone_document(latex_string).encode())
         temp_tex_file.close()
-        cwd = str(os.path.dirname(temp_tex_path))
+        cwd = str(temp_tex_path.parent)
 
         cmd = [
             'pdflatex',
@@ -126,51 +152,44 @@ def as_png(latex_string, dest='./', dpi=150):
             '-halt-on-error',
             str(temp_tex_path),
         ]
-        stderr, stdout, returncode = call(cmd, cwd=cwd)
-        if returncode>0:
-            raise ChildProcessError(
-                "`{!r}` failed with return code {}:\n{}\n{}\n ".format(
-                    cmd,
-                    returncode,
-                    stderr.decode(),
-                    stdout.decode()
-                )
-            )
+        verbose_run(
+            cmd,
+            cwd=cwd,
+            bufsize=int(1e8))
 
-        cmd = [
-            'convert',
-            '-density',
-            str(dpi),
-            str(temp_tex_path.with_suffix('.pdf')),
-            str(temp_tex_path.with_suffix('.png'))
-        ]
+    with open(str(temp_tex_path.with_suffix('.pdf')), 'rb') as h:
+        pdf = h.read()
 
-        stderr, stdout, returncode = call(cmd, cwd=cwd)
-        if returncode>0:
-            raise ChildProcessError(
-                "`{!r}` failed with return code {}:\n{}\n{}\n ".format(
-                    cmd,
-                    returncode,
-                    stderr.decode(),
-                    stdout.decode()
-                )
-            )
-        with open(str(temp_tex_path.with_suffix('.png')), 'rb') as h:
-            png = h.read()
-
-        remove_if_exists(temp_tex_path.with_suffix('.pdf'))
-        remove_if_exists(temp_tex_path.with_suffix('.png'))
-        remove_if_exists(temp_tex_path.with_suffix('.log'))
-        remove_if_exists(temp_tex_path.with_suffix('.aux'))
-        return png
+    # there could be more files than this, but hopefully the OS will clean them up?
+    remove_if_exists(temp_tex_path.with_suffix('.pdf'))
+    remove_if_exists(temp_tex_path.with_suffix('.log'))
+    remove_if_exists(temp_tex_path.with_suffix('.aux'))
+    return pdf
 
 
-def as_pdf(latex_string):
-    pass
+def as_svg(latex_string, converter='pdf2svg'):
+    pdf = as_pdf(latex_string)
+    with NamedTemporaryFile(suffix='.pdf', mode="w+b") as temp_pdf_handle, \
+            NamedTemporaryFile(suffix='.svg', delete=False) as temp_svg_handle:
+        temp_pdf_path = Path(temp_pdf_handle.name)
+        temp_pdf_handle.write(pdf)
+        temp_pdf_handle.seek(0)
+        if converter == 'pdf2svg':
+            cmd = ['pdf2svg', str(temp_pdf_path), temp_svg_handle.name]
+        else:
+            cmd = [
+                'inkscape',
+                '--without-gui',
+                '--file={}'.format(str(temp_pdf_path)),
+                '--export-plain-svg={}'.format(temp_svg_handle.name)]
 
-
-def as_svg(latex_string):
-    pass
+        proc = verbose_run(
+            cmd,
+        )
+    with open(temp_svg_handle.name, 'r') as h:
+        svg = h.read()
+    remove_if_exists(temp_svg_handle.name)
+    return svg
 
 
 def as_html(latex_string):
