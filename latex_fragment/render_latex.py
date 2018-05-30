@@ -42,7 +42,7 @@ def verbose_run(cmd, **kwargs):
     return proc
 
 
-def as_image_data_uri_elem(data, alt=""):
+def png_as_data_uri(data, alt=""):
     return (
         '''
         <img
@@ -57,7 +57,7 @@ def as_image_data_uri_elem(data, alt=""):
     )
 
 
-def as_standalone_document(latex_string):
+def latex_as_standalone_document(latex_string):
     """ Returns latex_string prepared as a LaTeX document """
     extra_packages, body = extra_packages_body(
         latex_string
@@ -96,11 +96,10 @@ def extra_packages_body(latex_string):
     return '\n'.join(packages), '\n'.join(body)
 
 
-def as_png(latex_string, dest='./', dpi=150):
+def pdf_as_png(pdf, dest='./', dpi=150):
     """
     pdf is not a streaming format and must happen on FS.
     """
-    pdf = as_pdf(latex_string)
     with NamedTemporaryFile(suffix='.pdf', mode="w+b") as temp_pdf_handle:
         temp_pdf_path = Path(temp_pdf_handle.name)
         temp_pdf_handle.write(pdf)
@@ -118,13 +117,13 @@ def as_png(latex_string, dest='./', dpi=150):
         return proc.stdout
 
 
-def as_pdf(latex_string):
+def latex_as_pdf(latex_string):
     """
     latex is temp file heavy and must happen on the FS
     """
     with NamedTemporaryFile(suffix='.tex', delete=False) as temp_tex_file:
         temp_tex_path = Path(temp_tex_file.name)
-        temp_tex_file.write(as_standalone_document(latex_string).encode())
+        temp_tex_file.write(latex_as_standalone_document(latex_string).encode())
         temp_tex_file.close()
         cwd = str(temp_tex_path.parent)
 
@@ -149,8 +148,7 @@ def as_pdf(latex_string):
     return pdf
 
 
-def as_svg(latex_string, converter='pdf2svg'):
-    pdf = as_pdf(latex_string)
+def pdf_as_svg(pdf, converter='pdf2svg'):
     with NamedTemporaryFile(suffix='.pdf', mode="w+b") as temp_pdf_handle, \
             NamedTemporaryFile(suffix='.svg', delete=False) as temp_svg_handle:
         temp_pdf_path = Path(temp_pdf_handle.name)
@@ -165,7 +163,7 @@ def as_svg(latex_string, converter='pdf2svg'):
                 '--file={}'.format(str(temp_pdf_path)),
                 '--export-plain-svg={}'.format(temp_svg_handle.name)]
 
-        proc = verbose_run(
+        verbose_run(
             cmd,
         )
     with open(temp_svg_handle.name, 'r') as h:
@@ -174,6 +172,13 @@ def as_svg(latex_string, converter='pdf2svg'):
     return svg
 
 
-def as_html(latex_string):
-    img_bytes = as_png(latex_string)
-    return as_image_data_uri_elem(img_bytes, latex_string)
+def latex_as_svg(latex_string, converter='pdf2svg'):
+    return pdf_as_svg(latex_as_pdf(latex_string))
+
+
+def latex_as_png(latex_string, converter='pdf2svg'):
+    return pdf_as_png(latex_as_pdf(latex_string))
+
+
+def latex_as_html(latex_string):
+    return png_as_data_uri(latex_as_png(latex_string), latex_string)

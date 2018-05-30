@@ -15,23 +15,23 @@ class LatexFragment:
             )[1]
         else:
             # document fragment with preamble correct for standalone rendering
-            return render_latex.as_standalone_document(self._body)
+            return render_latex.latex_as_standalone_document(self._body)
 
     def _repr_png_(self, **kwargs):
-        return render_latex.as_png(self._body, **kwargs)
+        return render_latex.latex_as_png(self._body, **kwargs)
 
     def _repr_pdf_(self, **kwargs):
-        return render_latex.as_pdf(self._body,  **kwargs)
+        return render_latex.latex_as_pdf(self._body,  **kwargs)
 
     def _repr_svg_(self, **kwargs):
-        return render_latex.as_svg(self._body, **kwargs)
+        return render_latex.latex_as_svg(self._body, **kwargs)
 
     def _repr_html_(self, **kwargs):
         """
         We need to define this, otherwise LaTeX is rendered in preference to PNG,
         which doesn't work for non-math.
         """
-        return render_latex.as_html(self._body, **kwargs)
+        return render_latex.latex_as_html(self._body, **kwargs)
 
     def _repr_markdown_(self, **kwargs):
         """
