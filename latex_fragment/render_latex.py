@@ -10,14 +10,10 @@ but I briefly thought I could do everything with pipes,
 before I discovered PDFs need random access.
 """
 
-from shutil import copy2 as copy
 from tempfile import NamedTemporaryFile
-import hashlib
 import os
 import os.path
-import re
-from subprocess import run, PIPE, DEVNULL
-import sys
+from subprocess import run, PIPE
 from pathlib import Path
 import base64
 
@@ -81,20 +77,6 @@ def as_standalone_document(latex_string):
         extra_packages=extra_packages,
         body=body
     )
-
-
-def hashed(content):
-    """context_hash"""
-    output = hashlib.md5()
-    output.update(content)
-    return output.hexdigest()
-
-
-def temp_filepath(suffix=''):
-    """ Return the name of a temporarily created file. Don't forget to delete it. """
-    f = NamedTemporaryFile(suffix=suffix, delete=False)
-    f.close()
-    return f.name
 
 
 def remove_if_exists(filename):
