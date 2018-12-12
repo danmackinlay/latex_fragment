@@ -47,7 +47,6 @@ def png_as_data_uri(data, alt=""):
     return (
         '''
         <img
-            style=""
             src="data:image/png;base64,{data}"
             alt={alt}
         />

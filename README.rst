@@ -63,6 +63,16 @@ Or, save it as an image:
     l = latex_fragment.LatexFragment(r'$x=y$')
     display(l)
 
+per default, jupyter notbooks will store all the displayable versions, inclduign PNG, SVG and so on, which is redndant. You cans ve some disk space by only using one
+
+.. code:: python
+
+    from IPython.display import display_png
+    from latex_fragment import LatexFragment
+
+    display_png(LatexFragment(r'$x=y$'));
+
+
 .. _mathjax: https://www.mathjax.org/
 .. _katex: https://github.com/Khan/KaTeX
 .. _jupyter: https://jupyter.org/
