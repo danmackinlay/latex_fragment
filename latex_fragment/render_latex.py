@@ -16,6 +16,7 @@ import os.path
 from subprocess import run, PIPE
 from pathlib import Path
 import base64
+import html
 
 
 def verbose_run(cmd, **kwargs):
@@ -53,7 +54,7 @@ def png_as_data_uri(data, alt=""):
         '''
     ).format(
         data=''.join(base64.encodebytes(data).decode().split('\n')),
-        alt=alt
+        alt=html.escape(alt)
     )
 
 
