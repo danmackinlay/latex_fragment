@@ -22,7 +22,7 @@ setup(
         "Topic :: Multimedia :: Graphics :: Editors :: Vector-Based",
         "Topic :: Multimedia :: Graphics :: Presentation",
         "Topic :: Scientific/Engineering :: Mathematics",
-"Topic :: Text Processing :: Markup :: LaTeX"
+        "Topic :: Text Processing :: Markup :: LaTeX"
       ],
       keywords='',
       author=u"Dan MacKinlay",

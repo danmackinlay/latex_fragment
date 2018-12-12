@@ -1,11 +1,11 @@
 latex_fragment
 ===============================
 
-You are writing your code using jupyter_ or pweave_,
-but your colleague freaks out because it's not using
-*that one special latex thing that we totally need or it's not real science*.
-(Let's say it's ``\algorithmic``, say, because this problem is alrady solved for
-mathematical markup thanks to MathJax_ and Katex_.)
+You are writing your code using jupyter_ or pweave_, but your colleague freaks
+out because it's not using *that one special latex thing that we totally need or
+it's not real science*. (Let's presume it is, say, ``\algorithmic``, because
+this problem is already solved for mathematical markup thanks to MathJax_ and
+Katex_.)
 
 No problem.
 
@@ -14,7 +14,7 @@ No problem.
     import latex_fragment
     latex_fragment.LatexFragment(r'$x=y$')
 
-This will render just fine, using your sytem LaTeX.
+This will render just fine, using your system LaTeX.
 
 .. image:: screenshot.png
 
@@ -46,6 +46,15 @@ Fancier:
 
 If you want it to display as an image, e.g. Pweave output, you can use the
 ipython display infrastructure:
+
+.. code:: python
+
+    from IPython.display import display
+    import latex_fragment
+    l = latex_fragment.LatexFragment(r'$x=y$')
+    display(l)
+
+Or, save it as an image:
 
 .. code:: python
 
